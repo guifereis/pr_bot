@@ -1,5 +1,7 @@
 import 'package:pr_bot/pr_bot.dart';
 
+import '../github_model.dart';
+
 class HookController extends HTTPController {
   HookController(this.slackToken);
 
@@ -7,18 +9,13 @@ class HookController extends HTTPController {
 
   @httpPost
   Future<Response> onHook(@HTTPHeader("x-github-event") String eventType) async {
-    var payload = request.body.asMap();
-
     if (eventType != "pull_request") {
       return new Response.accepted();
     }
 
-    var pullRequest = payload["pull_request"];
-
-    var repositoryName = pullRequest["head"]["repo"]["name"];
-    var title = pullRequest["title"];
-    var user = pullRequest["user"]["login"];
-    var message = "($repositoryName) ${user} opened PR \"${title}\".";
+    var payload = request.body.asMap();
+    var pullRequest = new PullRequest.fromMap(payload["pull_request"]);
+    var message = "(${pullRequest.repository.name}) ${pullRequest.submitter.login} opened PR '${pullRequest.title}'.";
 
     // We'll send to Slack here
     var parameters = {
